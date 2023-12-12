@@ -1,5 +1,3 @@
-use std::collections::hash_map::RandomState;
-use std::collections::hash_set::Intersection;
 use std::collections::HashSet;
 
 #[derive(PartialEq, Debug, Default)]
@@ -46,10 +44,27 @@ pub fn establish_winning_player_selection(input: &ScratchCard) -> Vec<String> {
     owned_vector
 }
 
+pub fn establish_score_based_on_winning_selection(input: &Vec<String>) -> i32 {
+
+    let mut counter = 0;
+
+    for (position, _) in input.iter().enumerate() {
+        if position == 0 {
+            counter += 1
+        }
+        else {
+            counter *= 2
+        }
+    };
+
+    counter
+
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::hash_map::RandomState;
 
     #[test]
     fn test_parse_line_into_scratch_card() {
@@ -87,11 +102,26 @@ mod tests {
     fn test_find_union_between_two_elements() {
         let test_input: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53";
         let scratch_card: ScratchCard = parse_line(test_input);
-
         let mut winning_player_selection: Vec<String> =
             establish_winning_player_selection(&scratch_card);
         let mut expected = ["17", "48", "83", "86"];
 
         assert_eq!(winning_player_selection.sort(), expected.sort());
     }
+
+    #[test]
+    fn test_establish_doubling_score_pattern_for_multiple_winning_numbers() {
+
+        let test_input: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53";
+        let scratch_card: ScratchCard = parse_line(test_input);
+        let winning_player_selection: Vec<String> =
+            establish_winning_player_selection(&scratch_card);
+
+        let score = establish_score_based_on_winning_selection(&winning_player_selection);
+
+        assert_eq!(score, 8)
+
+    }
+
+
 }
