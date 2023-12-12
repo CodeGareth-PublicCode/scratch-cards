@@ -21,7 +21,14 @@ impl ScratchCardGame {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let file_path: &str = "./src/input.txt";
+    let raw_content: String = std::fs::read_to_string(file_path).expect("should read from file");
+    let scratch_cards: Vec<ScratchCardGame> =
+        raw_content.lines().map(|line| parse_line(line)).collect();
+
+    let total_score = total_winning_score_of_multiple_scratch_cards(&scratch_cards);
+
+    println!("Final score: {}", total_score)
 }
 
 pub fn parse_line(input: &str) -> ScratchCardGame {
@@ -58,6 +65,18 @@ pub fn establish_score_based_on_winning_selection(input: &Vec<String>) -> i32 {
     }
 
     counter
+}
+
+pub fn total_winning_score_of_multiple_scratch_cards(input: &Vec<ScratchCardGame>) -> i32 {
+    let total_score: i32 = input
+        .iter()
+        .map(|scratch_card_game: &ScratchCardGame| {
+            let winning_player_selection: Vec<String> =
+                scratch_card_game.establish_winning_player_selection();
+            establish_score_based_on_winning_selection(&winning_player_selection)
+        })
+        .sum();
+    total_score
 }
 
 #[cfg(test)]
@@ -135,15 +154,17 @@ mod tests {
             .map(|&entry| parse_line(&entry))
             .collect();
 
-        let total_score: i32 = scratch_cards
-            .iter()
-            .map(|scratch_card_game: &ScratchCardGame| {
-                let winning_player_selection: Vec<String> =
-                    scratch_card_game.establish_winning_player_selection();
-                establish_score_based_on_winning_selection(&winning_player_selection)
-            })
-            .sum();
+        let total_score = total_winning_score_of_multiple_scratch_cards(&scratch_cards);
 
         assert_eq!(total_score, 13)
+    }
+
+    #[test]
+    fn test_parse_input_file_into_correct_shape() {
+        let file_path: &str = "./src/input.txt";
+        let raw_content: String =
+            std::fs::read_to_string(file_path).expect("should read from file");
+        let content = raw_content.lines().collect::<Vec<&str>>();
+        assert_eq!(content.len(), 205);
     }
 }
