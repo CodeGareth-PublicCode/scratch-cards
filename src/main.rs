@@ -1,9 +1,11 @@
+use std::collections::hash_map::RandomState;
+use std::collections::hash_set::Intersection;
 use std::collections::HashSet;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Default)]
 pub struct ScratchCard {
-    winners: HashSet<String>,
-    selection: HashSet<String>,
+    game_winners: HashSet<String>,
+    player_selection: HashSet<String>,
 }
 
 fn main() {
@@ -27,15 +29,27 @@ pub fn parse_line(input: &str) -> ScratchCard {
     }
 
     ScratchCard {
-        winners: container[0].to_owned(),
-        selection: container[1].to_owned(),
+        game_winners: container[0].to_owned(),
+        player_selection: container[1].to_owned(),
     }
+}
+
+pub fn establish_winning_player_selection(input: &ScratchCard) -> Vec<String> {
+    let player_selection = input.player_selection.clone();
+    let game_winning = input.game_winners.clone();
+
+    let owned_vector = player_selection
+        .intersection(&game_winning)
+        .into_iter()
+        .map(|element| String::from(element))
+        .collect();
+    owned_vector
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
+    use std::collections::hash_map::RandomState;
 
     #[test]
     fn test_parse_line_into_scratch_card() {
@@ -62,18 +76,22 @@ mod tests {
         ]);
 
         let expected_value: ScratchCard = ScratchCard {
-            winners: winnings,
-            selection: entries,
+            game_winners: winnings,
+            player_selection: entries,
         };
 
         assert_eq!(expected_value, scratch_card);
     }
 
-    // #[test]
-    // fn test_find_union_between_two_elements() {
-    //     let test_input: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53";
-    //     let parsed_line: Vec<Vec<&str>> = parse_line(test_input);
-    //
-    //     parsed_line.union
-    // }
+    #[test]
+    fn test_find_union_between_two_elements() {
+        let test_input: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53";
+        let scratch_card: ScratchCard = parse_line(test_input);
+
+        let mut winning_player_selection: Vec<String> =
+            establish_winning_player_selection(&scratch_card);
+        let mut expected = ["17", "48", "83", "86"];
+
+        assert_eq!(winning_player_selection.sort(), expected.sort());
+    }
 }
