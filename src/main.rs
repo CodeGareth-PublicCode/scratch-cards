@@ -85,13 +85,13 @@ pub fn total_winning_score_of_multiple_scratch_cards(input: &Vec<ScratchCardGame
     total_score
 }
 
-pub fn generate_card_store(input: Vec<&str>) -> HashMap<i32, Vec<ScratchCardGame>> {
-    let mut card_store: HashMap<i32, Vec<ScratchCardGame>> =
-        HashMap::<i32, Vec<ScratchCardGame>>::new();
+pub fn generate_card_store(input: Vec<&str>) -> HashMap<usize, Vec<ScratchCardGame>> {
+    let mut card_store: HashMap<usize, Vec<ScratchCardGame>> =
+        HashMap::<usize, Vec<ScratchCardGame>>::new();
 
     for (position, &entry) in input.iter().enumerate() {
         card_store
-            .entry((position + 1).to_owned() as i32)
+            .entry((position + 1).to_owned())
             .or_insert(vec![])
             .push(parse_line(&entry));
     }
@@ -231,4 +231,27 @@ mod tests {
 
         dbg!(additional_extended_card_instances.len(), 3);
     }
+
+    #[test]
+    fn test_increasing_instances_of_other_cards_based_on_win() {
+        let multiple_entries: Vec<&str> = vec![
+            "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
+            "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
+            "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
+            "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
+            "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
+            "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
+        ];
+
+        let mut card_store = generate_card_store(multiple_entries);
+
+        for (game_id, scratch_card_game_instances) in &card_store {
+            let scratch_card_instance = scratch_card_game_instances.get(0).unwrap();
+            let winning_player_selections = scratch_card_instance.establish_winning_player_selection();
+            let range_inclusive_limit = winning_player_selections.len();
+
+
+        }
+    }
+
 }
