@@ -45,22 +45,18 @@ pub fn establish_winning_player_selection(input: &ScratchCard) -> Vec<String> {
 }
 
 pub fn establish_score_based_on_winning_selection(input: &Vec<String>) -> i32 {
-
     let mut counter = 0;
 
     for (position, _) in input.iter().enumerate() {
         if position == 0 {
             counter += 1
-        }
-        else {
+        } else {
             counter *= 2
         }
-    };
+    }
 
     counter
-
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -111,7 +107,6 @@ mod tests {
 
     #[test]
     fn test_establish_doubling_score_pattern_for_multiple_winning_numbers() {
-
         let test_input: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53";
         let scratch_card: ScratchCard = parse_line(test_input);
         let winning_player_selection: Vec<String> =
@@ -120,8 +115,5 @@ mod tests {
         let score = establish_score_based_on_winning_selection(&winning_player_selection);
 
         assert_eq!(score, 8)
-
     }
-
-
 }
