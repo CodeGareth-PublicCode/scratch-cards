@@ -20,7 +20,12 @@ impl ScratchCardGame {
     }
 }
 
-fn main() {
+fn main() {}
+
+
+////////////////////////
+
+fn part_1() {
     let file_path: &str = "./src/input.txt";
     let raw_content: String = std::fs::read_to_string(file_path).expect("should read from file");
     let scratch_cards: Vec<ScratchCardGame> =
@@ -30,6 +35,8 @@ fn main() {
 
     println!("Final score: {}", total_score)
 }
+
+////////////////////////
 
 pub fn parse_line(input: &str) -> ScratchCardGame {
     let drop_card_ref_split: Vec<&str> = input.split(":").collect();
@@ -168,3 +175,4 @@ mod tests {
         assert_eq!(content.len(), 205);
     }
 }
+
