@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(PartialEq, Debug, Default, Clone)]
 pub struct ScratchCardGame {
     game_winners: HashSet<String>,
     player_selection: HashSet<String>,
@@ -21,7 +21,6 @@ impl ScratchCardGame {
 }
 
 fn main() {}
-
 
 ////////////////////////
 
@@ -86,9 +85,36 @@ pub fn total_winning_score_of_multiple_scratch_cards(input: &Vec<ScratchCardGame
     total_score
 }
 
+pub fn generate_card_store(input: Vec<&str>) -> HashMap<i32, Vec<ScratchCardGame>> {
+    let mut card_store: HashMap<i32, Vec<ScratchCardGame>> =
+        HashMap::<i32, Vec<ScratchCardGame>>::new();
+
+    for (position, &entry) in input.iter().enumerate() {
+        card_store
+            .entry((position + 1).to_owned() as i32)
+            .or_insert(vec![])
+            .push(parse_line(&entry));
+    }
+
+    card_store
+}
+
+pub fn replicate_card_instance(input: &Vec<ScratchCardGame>) -> Vec<ScratchCardGame> {
+    let mut card_instances: Vec<ScratchCardGame> = input.to_vec();
+
+    if card_instances.len() < 1 {
+        card_instances.extend_from_within(..card_instances.len());
+    } else {
+        card_instances.extend_from_within(..card_instances.len() - 1);
+    };
+
+    card_instances
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_parse_line_into_scratch_card() {
@@ -174,5 +200,35 @@ mod tests {
         let content = raw_content.lines().collect::<Vec<&str>>();
         assert_eq!(content.len(), 205);
     }
-}
 
+    #[test]
+    fn test_increasing_instances_of_cards_logic() {
+        // Card 1 has four matching numbers,
+        // so you win one copy each of the next four cards: cards 2, 3, 4, and 5
+
+        let multiple_entries: Vec<&str> = vec![
+            "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
+            "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
+            "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
+            "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
+            "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
+            "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
+        ];
+
+        let card_store = generate_card_store(multiple_entries);
+
+        // Build out card store to aid with multiplying instances on win
+
+        let card_instances: &Vec<ScratchCardGame> = card_store.get(&1).unwrap();
+
+        assert_eq!(card_instances.len(), 1);
+
+        let extended_card_instances = replicate_card_instance(&card_instances);
+
+        dbg!(extended_card_instances.len(), 2);
+
+        let additional_extended_card_instances = replicate_card_instance(&extended_card_instances);
+
+        dbg!(additional_extended_card_instances.len(), 3);
+    }
+}
