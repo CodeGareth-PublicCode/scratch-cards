@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 pub struct ScratchCardGame {
     game_winners: HashSet<String>,
     player_selection: HashSet<String>,
+    instances: usize,
 }
 
 impl ScratchCardGame {
@@ -17,6 +18,10 @@ impl ScratchCardGame {
             .map(|element| String::from(element))
             .collect();
         owned_vector
+    }
+
+    fn increase_number_of_instances_by_1(&mut self) {
+        self.instances += 1;
     }
 }
 
@@ -56,6 +61,7 @@ pub fn parse_line(input: &str) -> ScratchCardGame {
     ScratchCardGame {
         game_winners: container[0].to_owned(),
         player_selection: container[1].to_owned(),
+        instances: 1,
     }
 }
 
@@ -85,15 +91,13 @@ pub fn total_winning_score_of_multiple_scratch_cards(input: &Vec<ScratchCardGame
     total_score
 }
 
-pub fn generate_card_store(input: Vec<&str>) -> HashMap<usize, Vec<ScratchCardGame>> {
-    let mut card_store: HashMap<usize, Vec<ScratchCardGame>> =
-        HashMap::<usize, Vec<ScratchCardGame>>::new();
+pub fn generate_card_store(input: Vec<&str>) -> HashMap<usize, ScratchCardGame> {
+    let mut card_store: HashMap<usize, ScratchCardGame> = HashMap::<usize, ScratchCardGame>::new();
 
     for (position, &entry) in input.iter().enumerate() {
         card_store
             .entry((position + 1).to_owned())
-            .or_insert(vec![])
-            .push(parse_line(&entry));
+            .or_insert(parse_line(&entry));
     }
 
     card_store
@@ -143,6 +147,7 @@ mod tests {
         let expected_value: ScratchCardGame = ScratchCardGame {
             game_winners: winnings,
             player_selection: entries,
+            instances: 1,
         };
 
         assert_eq!(expected_value, scratch_card);
@@ -202,37 +207,6 @@ mod tests {
     }
 
     #[test]
-    fn test_increasing_instances_of_cards_logic() {
-        // Card 1 has four matching numbers,
-        // so you win one copy each of the next four cards: cards 2, 3, 4, and 5
-
-        let multiple_entries: Vec<&str> = vec![
-            "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
-            "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
-            "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
-            "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
-            "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
-            "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
-        ];
-
-        let card_store = generate_card_store(multiple_entries);
-
-        // Build out card store to aid with multiplying instances on win
-
-        let card_instances: &Vec<ScratchCardGame> = card_store.get(&1).unwrap();
-
-        assert_eq!(card_instances.len(), 1);
-
-        let extended_card_instances = replicate_card_instance(&card_instances);
-
-        dbg!(extended_card_instances.len(), 2);
-
-        let additional_extended_card_instances = replicate_card_instance(&extended_card_instances);
-
-        dbg!(additional_extended_card_instances.len(), 3);
-    }
-
-    #[test]
     fn test_increasing_instances_of_other_cards_based_on_win() {
         let multiple_entries: Vec<&str> = vec![
             "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
@@ -245,13 +219,26 @@ mod tests {
 
         let mut card_store = generate_card_store(multiple_entries);
 
-        for (game_id, scratch_card_game_instances) in &card_store {
-            let scratch_card_instance = scratch_card_game_instances.get(0).unwrap();
-            let winning_player_selections = scratch_card_instance.establish_winning_player_selection();
-            let range_inclusive_limit = winning_player_selections.len();
+        let mut tracker = 1;
 
-
+        while tracker < 6 {
+            let offset_counter: usize = tracker + 1;
+            dbg!(offset_counter);
+            let mut scratch_card_game = card_store
+                .get_mut(&offset_counter)
+                .unwrap()
+                .clone()
+                .to_owned();
+            scratch_card_game.increase_number_of_instances_by_1();
+            card_store.insert(offset_counter, scratch_card_game.to_owned());
+            tracker += 1
         }
-    }
 
+        assert_eq!(card_store.get(&1).unwrap().instances, 1);
+        assert_eq!(card_store.get(&2).unwrap().instances, 2);
+        assert_eq!(card_store.get(&3).unwrap().instances, 2);
+        assert_eq!(card_store.get(&4).unwrap().instances, 2);
+        assert_eq!(card_store.get(&5).unwrap().instances, 2);
+        assert_eq!(card_store.get(&6).unwrap().instances, 2);
+    }
 }
