@@ -23,13 +23,56 @@ impl ScratchCardGame {
     fn increase_number_of_instances_by_1(&mut self) {
         self.instances += 1;
     }
+
+    fn increase_number_of_instances(&mut self, increase: usize) {
+        self.instances += increase;
+    }
 }
 
-fn main() {}
+fn main() {
+    let file_path: &str = "./src/input.txt";
+    let raw_content: String = std::fs::read_to_string(file_path).expect("should read from file");
+    let scratch_cards: Vec<&str> = raw_content.lines().collect();
+
+    // Build a nice storage element so you can reference by game
+    let mut card_store = generate_card_store(scratch_cards);
+
+    // Iterate through in range to navigate multiple usages against card store
+    for game_number in 1..=card_store.len() {
+        // You need to establish the number of winners to figure out how many
+        // cards ahead need to increase their instance number by 1
+        let game = card_store.get(&game_number).unwrap();
+        let game_instances = game.instances.clone();
+        let number_of_winners = game.establish_winning_player_selection().len();
+
+        // Look ahead of the card you're at
+        for game_card_ref in game_number + 1..=game_number + number_of_winners {
+            // Greedy pull the card to own it
+            let mut scratch_card_game = card_store
+                .get_mut(&game_card_ref)
+                .unwrap()
+                .clone()
+                .to_owned();
+
+            // Bump instances by 1, meaning next pass you will loop victories this much
+            scratch_card_game.increase_number_of_instances(1 * game_instances);
+
+            // Insert back into hashmap for later reference
+            card_store.insert(game_card_ref, scratch_card_game.to_owned());
+        }
+    }
+
+    let counter: i32 = card_store
+        .iter()
+        .map(|(_, scratch_card_game)| return scratch_card_game.instances as i32)
+        .sum();
+
+    println!("{}", counter);
+}
 
 ////////////////////////
 
-fn part_1() {
+fn _part_1() {
     let file_path: &str = "./src/input.txt";
     let raw_content: String = std::fs::read_to_string(file_path).expect("should read from file");
     let scratch_cards: Vec<ScratchCardGame> =
@@ -103,22 +146,9 @@ pub fn generate_card_store(input: Vec<&str>) -> HashMap<usize, ScratchCardGame> 
     card_store
 }
 
-pub fn replicate_card_instance(input: &Vec<ScratchCardGame>) -> Vec<ScratchCardGame> {
-    let mut card_instances: Vec<ScratchCardGame> = input.to_vec();
-
-    if card_instances.len() < 1 {
-        card_instances.extend_from_within(..card_instances.len());
-    } else {
-        card_instances.extend_from_within(..card_instances.len() - 1);
-    };
-
-    card_instances
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ops::RangeInclusive;
 
     #[test]
     fn test_parse_line_into_scratch_card() {
@@ -223,7 +253,6 @@ mod tests {
 
         while tracker < 6 {
             let offset_counter: usize = tracker + 1;
-            dbg!(offset_counter);
             let mut scratch_card_game = card_store
                 .get_mut(&offset_counter)
                 .unwrap()
@@ -261,11 +290,61 @@ mod tests {
             // You need to establish the number of winners to figure out how many
             // cards ahead need to increase their instance number by 1
             let game = card_store.get(&game_number).unwrap();
+            let game_instances = game.instances.clone();
+            let number_of_winners = game.establish_winning_player_selection().len();
+
+            // Look ahead of the card you're at
+            for game_card_ref in game_number + 1..=game_number + number_of_winners {
+                // Greedy pull the card to own it
+                let mut scratch_card_game = card_store
+                    .get_mut(&game_card_ref)
+                    .unwrap()
+                    .clone()
+                    .to_owned();
+
+                // Bump instances by 1, meaning next pass you will loop victories this much
+                scratch_card_game.increase_number_of_instances(1 * game_instances);
+
+                // Insert back into hashmap for later reference
+                card_store.insert(game_card_ref, scratch_card_game.to_owned());
+            }
+        }
+
+        assert_eq!(card_store.get(&1).unwrap().instances, 1);
+        assert_eq!(card_store.get(&2).unwrap().instances, 2);
+        assert_eq!(card_store.get(&3).unwrap().instances, 4);
+        assert_eq!(card_store.get(&4).unwrap().instances, 8);
+        assert_eq!(card_store.get(&5).unwrap().instances, 14);
+        assert_eq!(card_store.get(&6).unwrap().instances, 1);
+    }
+
+    #[test]
+    fn test_part_2_test_case() {
+        let multiple_entries: Vec<&str> = vec![
+            "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
+            "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
+            "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
+            "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
+            "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
+            "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
+        ];
+
+        // Build a nice storage element so you can reference by game
+        let mut card_store = generate_card_store(multiple_entries);
+
+        // Iterate through in range to navigate multiple usages against card store
+        for game_number in 1..=card_store.len() {
+            // You need to establish the number of winners to figure out how many
+            // cards ahead need to increase their instance number by 1
+            let game = card_store.get(&game_number).unwrap();
+            let game_instances = game.instances.clone();
+            println!("Working with {}", game_instances);
             let number_of_winners = game.establish_winning_player_selection().len();
 
             // For any pre-existing instance occurrences, this drives the repeat process
-            // for future cards
-            for instances in 1..=game.instances {
+            // If card 2 wins 4 times, but has got 2 instances because of a victory at card 1
+            // Repeat the victory process for card 2 twice
+            for _ in 1..=game.instances {
                 // Look ahead of the card you're at
                 for game_card_ref in game_number + 1..=game_number + number_of_winners {
                     // Greedy pull the card to own it
@@ -276,7 +355,7 @@ mod tests {
                         .to_owned();
 
                     // Bump instances by 1, meaning next pass you will loop victories this much
-                    scratch_card_game.increase_number_of_instances_by_1();
+                    scratch_card_game.increase_number_of_instances(1 * game_instances);
 
                     // Insert back into hashmap for later reference
                     card_store.insert(game_card_ref, scratch_card_game.to_owned());
@@ -284,11 +363,10 @@ mod tests {
             }
         }
 
-        assert_eq!(card_store.get(&1).unwrap().instances, 1);
-        assert_eq!(card_store.get(&2).unwrap().instances, 2);
-        assert_eq!(card_store.get(&3).unwrap().instances, 4);
-        assert_eq!(card_store.get(&4).unwrap().instances, 8);
-        assert_eq!(card_store.get(&5).unwrap().instances, 14);
-        assert_eq!(card_store.get(&6).unwrap().instances, 1);
+        let counter: i32 = card_store
+            .iter()
+            .map(|(_, scratch_card_game)| return scratch_card_game.instances as i32)
+            .sum();
+        assert_eq!(counter, 30);
     }
 }
