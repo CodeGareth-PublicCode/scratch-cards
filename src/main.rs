@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::time::Instant;
 
 #[derive(PartialEq, Debug, Default, Clone)]
 pub struct ScratchCardGame {
@@ -20,16 +21,36 @@ impl ScratchCardGame {
         owned_vector
     }
 
-    fn increase_number_of_instances_by_1(&mut self) {
-        self.instances += 1;
-    }
-
     fn increase_number_of_instances(&mut self, increase: usize) {
         self.instances += increase;
     }
 }
 
 fn main() {
+    let now_1 = Instant::now();
+
+    // Code block to measure.
+    {
+        _part_1();
+    }
+
+    let elapsed = now_1.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    let now_2 = Instant::now();
+
+    // Code block to measure.
+    {
+        _part_2();
+    }
+
+    let elapsed = now_2.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+}
+
+////////////////////////
+
+fn _part_2() {
     let file_path: &str = "./src/input.txt";
     let raw_content: String = std::fs::read_to_string(file_path).expect("should read from file");
     let scratch_cards: Vec<&str> = raw_content.lines().collect();
@@ -237,41 +258,6 @@ mod tests {
     }
 
     #[test]
-    fn test_increasing_instances_of_other_cards() {
-        let multiple_entries: Vec<&str> = vec![
-            "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
-            "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
-            "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
-            "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
-            "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
-            "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
-        ];
-
-        let mut card_store = generate_card_store(multiple_entries);
-
-        let mut tracker = 1;
-
-        while tracker < 6 {
-            let offset_counter: usize = tracker + 1;
-            let mut scratch_card_game = card_store
-                .get_mut(&offset_counter)
-                .unwrap()
-                .clone()
-                .to_owned();
-            scratch_card_game.increase_number_of_instances_by_1();
-            card_store.insert(offset_counter, scratch_card_game.to_owned());
-            tracker += 1
-        }
-
-        assert_eq!(card_store.get(&1).unwrap().instances, 1);
-        assert_eq!(card_store.get(&2).unwrap().instances, 2);
-        assert_eq!(card_store.get(&3).unwrap().instances, 2);
-        assert_eq!(card_store.get(&4).unwrap().instances, 2);
-        assert_eq!(card_store.get(&5).unwrap().instances, 2);
-        assert_eq!(card_store.get(&6).unwrap().instances, 2);
-    }
-
-    #[test]
     fn test_increasing_instances_of_other_cards_based_on_wins() {
         let multiple_entries: Vec<&str> = vec![
             "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
@@ -338,28 +324,22 @@ mod tests {
             // cards ahead need to increase their instance number by 1
             let game = card_store.get(&game_number).unwrap();
             let game_instances = game.instances.clone();
-            println!("Working with {}", game_instances);
             let number_of_winners = game.establish_winning_player_selection().len();
 
-            // For any pre-existing instance occurrences, this drives the repeat process
-            // If card 2 wins 4 times, but has got 2 instances because of a victory at card 1
-            // Repeat the victory process for card 2 twice
-            for _ in 1..=game.instances {
-                // Look ahead of the card you're at
-                for game_card_ref in game_number + 1..=game_number + number_of_winners {
-                    // Greedy pull the card to own it
-                    let mut scratch_card_game = card_store
-                        .get_mut(&game_card_ref)
-                        .unwrap()
-                        .clone()
-                        .to_owned();
+            // Look ahead of the card you're at
+            for game_card_ref in game_number + 1..=game_number + number_of_winners {
+                // Greedy pull the card to own it
+                let mut scratch_card_game = card_store
+                    .get_mut(&game_card_ref)
+                    .unwrap()
+                    .clone()
+                    .to_owned();
 
-                    // Bump instances by 1, meaning next pass you will loop victories this much
-                    scratch_card_game.increase_number_of_instances(1 * game_instances);
+                // Bump instances by 1, meaning next pass you will loop victories this much
+                scratch_card_game.increase_number_of_instances(1 * game_instances);
 
-                    // Insert back into hashmap for later reference
-                    card_store.insert(game_card_ref, scratch_card_game.to_owned());
-                }
+                // Insert back into hashmap for later reference
+                card_store.insert(game_card_ref, scratch_card_game.to_owned());
             }
         }
 
